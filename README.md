@@ -1,13 +1,14 @@
+
 using System;
 using System.Linq;
 using System.Text;
 
 class Program
 {
-    private const string Symbols = "!@#$%^&*()_+-=[]{}|;':\",.<>?";
-    private const string UppercaseLetters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    private const string LowercaseLetters = "abcdefghijklmnopqrstuvwxyz";
-    private const string Numbers = "0123456789";
+    private static readonly string Symbols = "~!@#$%^&*()-_=+[]{};:,.<>/?";
+    private static readonly string UppercaseLetters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    private static readonly string LowercaseLetters = "abcdefghijklmnopqrstuvwxyz";
+    private static readonly string Numbers = "0123456789";
 
     private static readonly string[][] Permutations = {
         new[] { Numbers, LowercaseLetters, UppercaseLetters, Symbols },
@@ -64,13 +65,13 @@ class Program
             characters[k] = temp;
         }
 
-        string result = new string(characters.Except(exclude).ToArray());
+        string result = new string(characters.Except(exclude.ToCharArray()).ToArray());
         return result;
     }
 
-    private static char GetRandomCharacter(string type, string exclude = "")
+    private static char GetRandomCharacter(char[] type, string exclude = "")
     {
-        string possibleCharacters = new string(type.Except(exclude).ToArray());
+        string possibleCharacters = new string(type.Except(exclude.ToCharArray()).ToArray());
         int index = Random.Next(possibleCharacters.Length);
         return possibleCharacters[index];
     }
@@ -83,22 +84,20 @@ class Program
 
         for (int i = 0; i < length; i++)
         {
-            string type = permutation[i % permutation.Length]; // Correction ici pour s'assurer de ne pas dépasser la longueur de la permutation
-            char randomCharacter = GetRandomCharacter(type, password.ToString());
+            string type = permutation[i % permutation.Length];
+            char randomCharacter = GetRandomCharacter(type.ToCharArray(), password.ToString());
             password.Append(randomCharacter);
         }
 
         password = new StringBuilder(RemoveConsecutiveDuplicates(password.ToString()));
 
-        // Si la longueur de la permutation est inférieure à la longueur demandée, ajouter des caractères aléatoires supplémentaires
         while (password.Length < length)
         {
             string type = permutation[Random.Next(permutation.Length)];
-            char randomCharacter = GetRandomCharacter(type, password.ToString());
+            char randomCharacter = GetRandomCharacter(type.ToCharArray(), password.ToString());
             password.Append(randomCharacter);
         }
 
-        // Tronquer le mot de passe si sa longueur dépasse celle demandée
         if (password.Length > length)
         {
             password.Length = length;
