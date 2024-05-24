@@ -1,6 +1,6 @@
-
 using System;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 
 class Program
@@ -53,31 +53,20 @@ class Program
         return new string(characters);
     }
 
-    private static string ShuffleCharactersWithoutDuplicates(string input, string exclude = "")
-    {
-        char[] characters = input.ToCharArray();
-        int n = characters.Length;
-        while (n > 1)
-        {
-            int k = Random.Next(n--);
-            char temp = characters[n];
-            characters[n] = characters[k];
-            characters[k] = temp;
-        }
-
-        string result = new string(characters.Except(exclude.ToCharArray()).ToArray());
-        return result;
-    }
-
     private static char GetRandomCharacter(char[] type, string exclude = "")
     {
-        string possibleCharacters = new string(type.Except(exclude.ToCharArray()).ToArray());
+        string possibleCharacters = new string(type.Except(exclude).ToArray());
         int index = Random.Next(possibleCharacters.Length);
         return possibleCharacters[index];
     }
 
     private static string GeneratePassword(int length)
     {
+        if (length <= 0)
+        {
+            throw new ArgumentException("La longueur du mot de passe doit être supérieure à zéro.");
+        }
+
         string[] permutation = Permutations[Random.Next(Permutations.Length)];
 
         StringBuilder password = new StringBuilder();
@@ -89,31 +78,38 @@ class Program
             password.Append(randomCharacter);
         }
 
+        // Remove consecutive duplicates
         password = new StringBuilder(RemoveConsecutiveDuplicates(password.ToString()));
 
-        while (password.Length < length)
+        // Ensure no duplicate characters between uppercase and lowercase at the end
+        string finalPassword = password.ToString();
+        for (int i = 0; i < UppercaseLetters.Length; i++)
         {
-            string type = permutation[Random.Next(permutation.Length)];
-            char randomCharacter = GetRandomCharacter(type.ToCharArray(), password.ToString());
-            password.Append(randomCharacter);
+            char upperChar = UppercaseLetters[i];
+            char lowerChar = Char.ToLower(upperChar);
+            if (finalPassword.Contains(upperChar.ToString()) && finalPassword.Contains(lowerChar.ToString()))
+            {
+                finalPassword = finalPassword.Replace(lowerChar.ToString(), GetRandomCharacter(LowercaseLetters.ToCharArray(), finalPassword).ToString());
+            }
         }
 
-        if (password.Length > length)
+        if (finalPassword.Length > length)
         {
-            password.Length = length;
+            finalPassword = finalPassword.Substring(0, length);
         }
 
-        return password.ToString();
+        return finalPassword;
     }
 
     private static string RemoveConsecutiveDuplicates(string password)
     {
-        if (password.Length <= 1)
+        if (string.IsNullOrEmpty(password))
         {
             return password;
         }
 
-        StringBuilder cleanedPassword = new StringBuilder(password[0].ToString());
+        StringBuilder cleanedPassword = new StringBuilder();
+        cleanedPassword.Append(password[0]);
 
         for (int i = 1; i < password.Length; i++)
         {
@@ -128,7 +124,7 @@ class Program
 
     static void Main()
     {
-        int passwordLength = 16;
+        int passwordLength = 14;
         Console.WriteLine("Generated Passwords:");
 
         for (int i = 0; i < 10; i++)
